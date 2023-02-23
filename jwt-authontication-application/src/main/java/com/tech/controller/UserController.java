@@ -1,5 +1,7 @@
 package com.tech.controller;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,26 +35,25 @@ public class UserController {
 
 	@Autowired
 	JWTUtils jwtUtils;
-	
+
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	@PostMapping(value = "auth")
-	public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+	public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest,
+			HttpServletRequest servletRequest) {
 
 		Authentication authentication = authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-		String token = jwtUtils.generateJwtToken(authentication);
-		
+		String token = jwtUtils.generateJwtToken(authentication, servletRequest);
+
 		UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-		return ResponseEntity.ok(new JwtResponse(token, 
-												 userDetails.getId(), 
-												 userDetails.getUsername()));
+		return ResponseEntity.ok(new JwtResponse(token, userDetails.getId(), userDetails.getUsername()));
 	}
-	
+
 	@PostMapping(value = "sign-up")
 	public UserEntity save(@RequestBody UserEntity userEntity) {
 		userEntity.setId(null);

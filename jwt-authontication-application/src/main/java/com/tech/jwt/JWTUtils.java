@@ -2,6 +2,8 @@ package com.tech.jwt;
 
 import java.util.Date;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -25,22 +27,22 @@ public class JWTUtils {
 	@Value("${tech.app.jwtExpirationMs}")
 	private int jwtExpirationMs;
 
-	public String generateJwtToken(Authentication authentication) {
+	public String generateJwtToken(Authentication authentication, HttpServletRequest servletRequest) {
 
 		UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
 
 		return Jwts.builder().setSubject((userPrincipal.getUsername())).setIssuedAt(new Date())
 				.setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
-				.signWith(SignatureAlgorithm.HS512, jwtSecret).compact();
+				.signWith(SignatureAlgorithm.HS512, jwtSecret+servletRequest.getRemoteHost()).compact();
 	}
 
-	public String getUserNameFromJwtToken(String token) {
-		return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody().getSubject();
+	public String getUserNameFromJwtToken(String token,  HttpServletRequest servletRequest) {
+		return Jwts.parser().setSigningKey(jwtSecret+servletRequest.getRemoteHost()).parseClaimsJws(token).getBody().getSubject();
 	}
 
-	public boolean validateJwtToken(String authToken) {
+	public boolean validateJwtToken(String authToken,  HttpServletRequest servletRequest) {
 		try {
-			Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
+			Jwts.parser().setSigningKey(jwtSecret+servletRequest.getRemoteHost()).parseClaimsJws(authToken);
 			return true;
 		} catch (SignatureException e) {
 			log.error("Invalid signature: {}", e.getMessage());
