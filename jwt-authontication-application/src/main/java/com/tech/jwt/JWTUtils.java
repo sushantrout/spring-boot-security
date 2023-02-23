@@ -1,10 +1,15 @@
 package com.tech.jwt;
 
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.tech.entity.UserDetailsImpl;
 
@@ -19,6 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class JWTUtils {
+	
+	public static Map<String, Boolean> SESSION_MAP = new LinkedHashMap<>();
+	
 	@Value("${tech.app.jwtSecret}")
 	private String jwtSecret;
 
@@ -40,6 +48,10 @@ public class JWTUtils {
 
 	public boolean validateJwtToken(String authToken) {
 		try {
+			Boolean logout = JWTUtils.SESSION_MAP.get(getUserNameFromJwtToken(authToken));
+			if(logout != null && logout) {
+				return false;
+			}
 			Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
 			return true;
 		} catch (SignatureException e) {
@@ -55,5 +67,15 @@ public class JWTUtils {
 		}
 
 		return false;
+	}
+	
+	public String parseJwt(HttpServletRequest request) {
+		String headerAuth = request.getHeader("Authorization");
+
+		if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
+			return headerAuth.substring(7, headerAuth.length());
+		}
+
+		return null;
 	}
 }
