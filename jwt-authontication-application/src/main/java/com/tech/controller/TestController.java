@@ -1,6 +1,7 @@
 package com.tech.controller;
 
-import org.springframework.security.core.context.SecurityContextHolder;
+import javax.security.sasl.AuthenticationException;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -10,8 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class TestController {
 	
 	@GetMapping
-	public Object getTestMessage() {
-		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		return principal;
+	public Object getTestMessage() throws AuthenticationException {
+		throw new AuthenticationException("sorry no user found");
 	}
 }
